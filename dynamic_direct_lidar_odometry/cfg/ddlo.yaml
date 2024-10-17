@@ -1,0 +1,97 @@
+gravityAlign: false
+printStatus: true
+dynamicDetection: true
+odomFrame: "odom"
+childFrame: "autonomy_module_lidar_frame"
+
+mapNode:
+  publishFullMap: true
+  publishFreq: 1.0
+  useVoxelFilter: true
+  leafSize: 0.25
+  filterBboxHistory: true  # remove all points within an object's bbox in the map
+  filterMargin: 0          # extend the bbox by this value in all dimensions
+
+odomNode:
+  preprocessing:
+    downsampling:
+      use: true
+      row: 2
+      col: 5
+    cropBoxFilter:
+      use: true
+      size: 1.0
+    voxelFilter:
+      scan:
+        use: true
+        res: 0.25
+      submap:
+        use: true
+        res: 0.5
+
+  keyframe:
+    threshD: 5.0
+    threshR: 45.0
+
+  submap:
+    keyframe:
+      knn: 10
+      kcv: 10
+      kcc: 10
+
+  gicp:
+    minNumPoints: 10
+    s2s:
+      kCorrespondences: 10
+      maxCorrespondenceDistance: 1.0
+      maxIterations: 32
+      transformationEpsilon: 0.01
+      euclideanFitnessEpsilon: 0.01
+      ransac:
+        iterations: 5
+        outlierRejectionThresh: 1.0
+    s2m:
+      kCorrespondences: 20
+      maxCorrespondenceDistance: 2.0
+      maxIterations: 32
+      transformationEpsilon: 0.01
+      euclideanFitnessEpsilon: 0.01
+      ransac:
+        iterations: 5
+        outlierRejectionThresh: 1.0
+
+  detection:
+    rows: 128
+    columns: 1024
+    organized: True
+    ang_bottom: 45
+    groundRows: 60  # "a rough number of scan lines that will cover the ground"
+    groundAngleThreshold: 10
+    minimumRange: 1.0
+    sensorMountAngle: 0.0
+    theta: 0.2  # 60.0 / 180.0 * M_PI;
+    minPointNum: 40
+    validPointNum: 15
+    minLineNum: 4
+    validLineNum: 6
+    minDeltaZ: 0.6
+    maxDeltaZ: 3.0
+    maxDistance: 25
+    maxElevation: 1.0  # max height relative to robot height
+    maxDimRatio: 10  # ratio biggest/smallest bbox dim
+    residuumHeightRatio: 0.3
+    dilateKernelSize: 2
+
+  tracking:
+    maxNoHits: 10  # window after which objects without hits are removed
+    minDynamicHits: 5  # minimum number of hits for object to be dynamic
+    maxUndefinedHits: 10  # window after which non-dynamic objects are labeled as static
+    maxObjVelocity: 15  # m/s
+    minDistFromOrigin: 0.75  # if an objects trajectory is shorter than this, it is not classified as dynamic
+
+  evaluation:
+    evaluate: false
+    pkgPath: "abc.yaml"
+    dir: "/some/dir"
+
+

@@ -1,0 +1,21 @@
+<launch>
+  
+  <arg name="directory" default="" />
+
+  <node pkg="rosbag" 
+      type="play" 
+      name="player" 
+      args="$(arg directory)/00.bag
+            $(arg directory)/01.bag
+            $(arg directory)/02.bag
+            $(arg directory)/03.bag
+            $(arg directory)/04.bag
+            $(arg directory)/05.bag
+            $(arg directory)/06.bag
+            $(arg directory)/07.bag
+            $(arg directory)/08.bag
+            $(arg directory)/09.bag
+            -d 1
+            -s 20"
+      />
+</launch>

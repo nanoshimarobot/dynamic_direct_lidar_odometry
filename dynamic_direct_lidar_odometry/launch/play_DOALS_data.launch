@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="rosbag" 
+      type="play" 
+      name="player" 
+      args="/home/$(env USER)/bags/DOALS/small_town_simulation/row_major.bag
+            /tf:=/tf_trash -r 1.0 -d 1.0"
+      />
+</launch>

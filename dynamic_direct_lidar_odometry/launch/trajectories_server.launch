@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node pkg="dynamic_direct_lidar_odometry" type="trajectories_server" name="trajectories_server" output="screen">
+    <param name="sub_topic" value="/ddlo/bboxes_dynamic" />
+    <param name="pub_topic" value="/ddlo/all_objects_republished" />
+    <param name="publish_rate" value="3" />
+  </node>
+
+</launch>

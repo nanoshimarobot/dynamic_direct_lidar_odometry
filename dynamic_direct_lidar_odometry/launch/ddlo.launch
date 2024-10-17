@@ -1,0 +1,67 @@
+<launch>
+
+  <arg name="rviz" default="true"/>
+
+  <arg name="play_bag" default="true"/>
+  <arg name="pointcloud_topic" default="/autonomy_module_lidar/points"/>
+  <arg name="imu_topic" default="/imu/xsens/data"/>
+
+  <group ns="ddlo">
+
+  <!-- Load parameters -->
+  <rosparam file="$(find dynamic_direct_lidar_odometry)/cfg/ddlo.yaml" command="load"/>
+
+  <!-- DLO Odometry Node -->
+  <node name="odom" pkg="dynamic_direct_lidar_odometry" type="ddlo_odom_node" output="screen" clear_params="true">
+
+    <!-- Subscriptions -->
+    <remap from="pointcloud" to="$(arg pointcloud_topic)"/>
+    <remap from="imu" to="$(arg imu_topic)"/>
+    <remap from="~map_info" to="map_info"/>
+
+    <!-- Publications -->
+    <remap from="~odom" to="odom"/>
+    <remap from="~pose" to="pose"/>
+    <remap from="~kfs" to="keyframe"/>
+    <remap from="~keyframe" to="keyframe"/>
+    <remap from="~get_next_frame" to="get_next_frame"/>
+    <remap from="~bboxes_dynamic" to="bboxes_dynamic"/>
+    <remap from="~bboxes_static" to="bboxes_static"/>
+    <remap from="~bboxes_predicted" to="bboxes_predicted"/>
+    <remap from="~active_submap" to="active_submap"/>
+    <remap from="~active_trajectories" to="active_trajectories"/>
+    <remap from="~dynamic_points" to="dynamic_points"/>
+    <remap from="~path" to="path"/>
+    <remap from="~label_img" to="label_img"/>
+    <remap from="~residuals" to="residuals"/>
+
+  </node>
+
+  <!-- DLO Mapping Node -->
+  <node name="map" pkg="dynamic_direct_lidar_odometry" type="ddlo_map_node" output="screen" clear_params="true">
+
+    <!-- Subscriptions -->
+    <remap from="~keyframes" to="keyframe"/>
+    <remap from="~bboxes_dynamic" to="bboxes_dynamic"/>
+    <remap from="~dynamic_points" to="dynamic_points"/>
+
+    <!-- Publications -->
+    <remap from="~map_info" to="map_info"/>
+    <remap from="~keyframe" to="keyframe"/>
+
+  </node>
+
+  <!-- trajectories_server -->
+  <include file="$(find dynamic_direct_lidar_odometry)/launch/trajectories_server.launch"/>
+
+  <!-- ROS bag file -->
+  <include file="$(find dynamic_direct_lidar_odometry)/launch/play_kantplatz_data.launch" if="$(arg play_bag)">
+    <arg name="directory" value="$(arg directory)"/>
+  </include>
+
+  </group>
+
+  <!-- RViz -->
+  <node output="screen" pkg="rviz" type="rviz" name="ddlo_rviz" args="-d $(find dynamic_direct_lidar_odometry)/cfg/ddlo.rviz" if="$(arg rviz)" />
+
+</launch>
