@@ -1,6 +1,6 @@
 # Dynamic Direct LiDAR Odometry: Dynamic LiDAR Odometry for Mobile Robots in Urban Search and Rescue Environments
 
-#### [[IEEE RA-L](TODO)] [[ArXix](TODO)] TODO
+#### [[ArXiv](https://arxiv.org/abs/2411.18443)]
 
 This repository contains the source code to the IROS paper _Dynamic LiDAR Odometry for Mobile Robots in Urban Search and Rescue Environments_.
 It extends the [Direct LiDAR Odometry](https://github.com/vectr-ucla/direct_lidar_odometry) framework to detect dynamic objects in the LiDAR scans, track them individually and remove them from the map.
