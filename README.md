@@ -56,10 +56,14 @@ The following services are available:
 ## Citation
 If you find this work useful, please cite:
 ```sh
-@article{lichtenfeld2024dynamic,
-    author={},
-    TODO...
-}
+@INPROCEEDINGS{10802045,
+  author={Lichtenfeld, Jonathan and Daun, Kevin and von Stryk, Oskar},
+  booktitle={2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)}, 
+  title={Efficient Dynamic LiDAR Odometry for Mobile Robots with Structured Point Clouds}, 
+  year={2024},
+  pages={10137-10144},
+  }
+
 ```
 
 ## Acknowledgments
