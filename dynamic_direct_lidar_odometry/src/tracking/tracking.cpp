@@ -73,11 +73,14 @@ void TrackingModule::update(float dt, const std::vector<Object>& detected_object
   }
 
   publishBBoxes();  // TODO detach a thread for this
+
+  ROS_INFO("track updated");
 }
 
 void TrackingModule::associate(std::vector<Object> detected_objects, std::vector<Object> current_tracked_objects,
                                float dt)
 {
+  // ROS_INFO("Associating objects...");
   if (current_tracked_objects.size() == 0)
   {
     unmatched_detections_ = std::vector<int>(detected_objects.size());
@@ -101,6 +104,7 @@ void TrackingModule::associate(std::vector<Object> detected_objects, std::vector
     {
       double cost = getCostFull(detected_objects[i], current_tracked_objects[j]);
       float displacement = getCostSimple(detected_objects[i], current_tracked_objects[j]);
+      // ROS_INFO("cost: %f", cost);
 
       cost_matrix_row.push_back(cost);
       disp_matrix_row.push_back(displacement);
@@ -110,7 +114,9 @@ void TrackingModule::associate(std::vector<Object> detected_objects, std::vector
   }
 
   assignment_.clear();
+  // ROS_INFO("Hungarian algorithm...");
   double cost = hungarian_alg_.Solve(cost_matrix, assignment_);
+  // ROS_INFO("Hungarian algorithm done");
 
   // get matched (!=1) / unmatched (-1) detections
   for (unsigned int i = 0; i < detected_objects.size(); i++)
@@ -140,6 +146,7 @@ void TrackingModule::associate(std::vector<Object> detected_objects, std::vector
     else
       ++it;
   }
+  // ROS_INFO("Associating objects done");
 }
 
 double TrackingModule::getCostSimple(Object detected_object, Object current_tracked_object)
@@ -165,6 +172,8 @@ double TrackingModule::getBBoxIoU(Object& detected_object, Object& current_track
 double TrackingModule::getCostFull(Object detected_object, Object current_tracked_object)
 {
   double bbox_cost = 1 - getBBoxIoU(detected_object, current_tracked_object);
+
+  // ROS_INFO("bbox_cost: %f", bbox_cost);
 
   float np_det = (float)detected_object.num_points;
   float np_track = (float)current_tracked_object.num_points;

@@ -254,6 +254,8 @@ void DetectionModule::projectScan(const pcl::PointCloud<PointType>::Ptr& cloud_i
   pcl::copyPointCloud(*cloud_in, *cloud_in_);
   pcl::copyPointCloud(*cloud_in_t, *cloud_in_t_);
 
+  ROS_INFO("Cloud is organized: %d", cloud_in_t_->isOrganized());
+
   bool is_organized = cloud_in_t_->isOrganized() && is_organized_;  // TODO check this
 
   // find start orientation for aligning range image with residual image
@@ -266,6 +268,7 @@ void DetectionModule::projectScan(const pcl::PointCloud<PointType>::Ptr& cloud_i
           (cloud_in_->points[idx].y != 0 && cloud_in_->points[idx].x < 1e9))
       {
         start_orientation_ = atan2(cloud_in_->points[idx].x, cloud_in_->points[idx].y) * 180 / M_PI;
+        ROS_INFO("Start angle: %f", start_orientation_);
         break;
       }
     }
@@ -282,47 +285,152 @@ void DetectionModule::projectScan(const pcl::PointCloud<PointType>::Ptr& cloud_i
   auto z0 = -T_.coeff(2, 3);
 
 #pragma omp parallel for
-  for (size_t i = 0; i < cloud_in_t_->size(); ++i)
+  for (int row = 0; row < H_; row++)
   {
-    // Get distance from sensor
-    auto x = cloud_in_t_->points[i].x + x0;
-    auto y = cloud_in_t_->points[i].y + y0;
-    auto z = cloud_in_t_->points[i].z + z0;
-    if (is_organized)
+    for (int col = 0; col < W_; col++)
     {
-      row = (int)(i / W_);
-      col = i % W_;
+        range_mat_.at<float>(row, col) = 0.0;
+        // organized cloud なので、
+        //  index = row * W_ + col
+        size_t idx = row * W_ + col;
+        const auto& pt = cloud_in_t_->points[idx];
+
+        // 点が無効かどうかチェック (NaN等)
+        if (!pcl::isFinite(pt)) {
+            continue;
+        }
+
+        // カメラ原点（0, 0, 0）からの距離を計算 (Azure Kinectの点群は既にカメラ座標系のはず)
+        float x = pt.x + x0;
+        float y = pt.y + y0;
+        float z = pt.z + z0;
+
+        float range = sqrtf(x * x + y * y + z * z);
+        if (range < minimum_range_)
+            continue;
+
+        // range_mat_ に書き込み
+        range_mat_.at<float>(row, col) = range;
+        full_cloud_->points[idx] = cloud_in_t_->points[idx];
     }
-    else
-    {
-      // Vertical angle
-      auto vertical_angle = atan2(z, sqrt(x * x + y * y)) * 180 / M_PI;
-      row = H_ - (vertical_angle + ang_bottom_) / ang_res_y_;
-      if (row < 0 || row >= H_)
-        row = H_ - 1;
-
-      // Horizontal angle
-      auto horizon_angle = atan2(x, y) * 180 / M_PI;
-      col = round(horizon_angle / ang_res_x_);
-
-      if (col >= W_)
-        col -= W_;
-      else if (col < 0)
-        col += W_;
-    }
-
-    range = sqrt(x * x + y * y + z * z);
-
-    // skip points that are too close or invalid
-    if (range < minimum_range_)
-      continue;
-
-    range_mat_.at<float>(row, col) = range;
-    full_cloud_->points[i] = cloud_in_t_->points[i];
   }
+  // for (size_t i = 0; i < cloud_in_t_->size(); ++i)
+  // {
+  //   // Get distance from sensor
+  //   auto x = cloud_in_t_->points[i].x + x0;
+  //   auto y = cloud_in_t_->points[i].y + y0;
+  //   auto z = cloud_in_t_->points[i].z + z0;
+  //   if (is_organized)
+  //   {
+  //     row = (int)(i / W_);
+  //     col = i % W_;
+  //   }
+  //   else
+  //   {
+  //     // Vertical angle
+  //     auto vertical_angle = atan2(z, sqrt(x * x + y * y)) * 180 / M_PI;
+  //     row = H_ - (vertical_angle + ang_bottom_) / ang_res_y_;
+  //     if (row < 0 || row >= H_)
+  //       row = H_ - 1;
+
+  //     // Horizontal angle
+  //     auto horizon_angle = atan2(x, y) * 180 / M_PI;
+  //     col = round(horizon_angle / ang_res_x_);
+
+  //     if (col >= W_)
+  //       col -= W_;
+  //     else if (col < 0)
+  //       col += W_;
+  //   }
+
+  //   range = sqrt(x * x + y * y + z * z);
+
+  //   // skip points that are too close or invalid
+  //   if (range < minimum_range_)
+  //     continue;
+
+  //   range_mat_.at<float>(row, col) = range;
+  //   full_cloud_->points[i] = cloud_in_t_->points[i];
+  // }
+
+  // cv::Mat range_mat_scaled;
+  // float clip_range = 15.0;
+  // range_mat_.convertTo(range_mat_scaled, CV_8UC1, 255.0 / clip_range);
+  // range_mat_scaled = 255 - range_mat_scaled;  // invert colors
+
+  // cv_bridge::CvImage img_bridge;
+  // sensor_msgs::Image img_msg;
+  // img_bridge = cv_bridge::CvImage(header_, sensor_msgs::image_encodings::TYPE_8UC1, range_mat_scaled);
+  // img_bridge.toImageMsg(img_msg);
+  // range_img_pub_.publish(img_msg);
 
   time_stats_["projectScan"].tock();
+  ROS_INFO("projectScan done");
 }
+
+// void DetectionModule::projectScan(const pcl::PointCloud<PointType>::Ptr& cloud_in,
+//                                     const pcl::PointCloud<PointType>::Ptr& cloud_in_t, const Eigen::Matrix4f T,
+//                                     const Eigen::Matrix4f T_s2s)  // 使う座標変換がある場合だけ受け取る
+// {
+//   // （1）前処理・変数セットアップ
+//   time_stats_["projectScan"].tick();
+
+//   // 例：Azure Kinect 点群は organized 前提
+//   //     幅 W_, 高さ H_ を cloud_in->width, cloud_in->height として設定
+//   if (!cloud_in->isOrganized())
+//   {
+//       ROS_WARN("Input cloud is not organized. Skip.");
+//       return;
+//   }
+
+//   H_ = cloud_in->height;
+//   W_ = cloud_in->width;
+
+//   ROS_INFO("Cloud Height: %d, Width: %d", H_, W_);
+//   ROS_INFO("Cloud size: %zu", cloud_in->points.size());
+//   ROS_INFO("Cloud HxW: %zu", H_ * W_);
+
+//   // 必要なら transform
+//   // pcl::PointCloud<PointType>::Ptr cloud_transformed(new pcl::PointCloud<PointType>);
+//   // pcl::transformPointCloud(*cloud_in, *cloud_transformed, T);
+//   // ※本当に座標を変換したい場合のみ。カメラ座標系のままでOKなら不要
+
+//   // （2）レンジ画像用の行列を初期化
+//   range_mat_ = cv::Mat(H_, W_, CV_32F, cv::Scalar::all(0));
+
+//   // （3）organizedな点群を走査し、レンジ(深度)を計算して書き込む
+//   //      ここでは transformCloud を使わない例とする
+//   for (int row = 0; row < H_; row++)
+//   {
+//       for (int col = 0; col < W_; col++)
+//       {
+//           // organized cloud なので、
+//           //  index = row * W_ + col
+//           size_t idx = row * W_ + col;
+//           const auto& pt = cloud_in->points[idx];
+
+//           // 点が無効かどうかチェック (NaN等)
+//           if (!pcl::isFinite(pt)) {
+//               continue;
+//           }
+
+//           // カメラ原点（0, 0, 0）からの距離を計算 (Azure Kinectの点群は既にカメラ座標系のはず)
+//           float x = pt.x;
+//           float y = pt.y;
+//           float z = pt.z;
+
+//           float range = sqrtf(x * x + y * y + z * z);
+//           if (range < minimum_range_)
+//               continue;
+
+//           // range_mat_ に書き込み
+//           range_mat_.at<float>(row, col) = range;
+//       }
+//   }
+
+//   time_stats_["projectScan"].tock();
+// }
+
 
 void DetectionModule::groundRemoval()
 {
@@ -342,7 +450,7 @@ void DetectionModule::groundRemoval()
       size_t row = H_ - 1 - row_inverse;  // inverse looping because we start from the bottom
 
       lower_ind = col + (row)*W_;
-      upper_ind = col + (row - 1) * W_;
+      upper_ind = col + (row - 1)*W_;
       if (lower_ind < 0 || upper_ind >= full_cloud_->size())
         ROS_ERROR("LOWER UPPER %zu %zu", lower_ind, upper_ind);
 
@@ -382,6 +490,8 @@ void DetectionModule::groundRemoval()
     }
   }
   time_stats_["groundRemoval"].tock();
+
+  ROS_INFO("GroundSegmentation ok");
 }
 
 void DetectionModule::cloudSegmentation()
@@ -411,6 +521,7 @@ void DetectionModule::cloudSegmentation()
   }
 
   time_stats_["cloudSegmentation"].tock();
+  ROS_INFO("CloudSegmentation ok");
 }
 
 void DetectionModule::labelComponents(int row, int col)
@@ -585,6 +696,7 @@ void DetectionModule::labelComponents(int row, int col)
       label_mat_.at<int>(all_pushed_ind_X_[i], all_pushed_ind_Y_[i]) = 999999;
     }
   }
+  // ROS_INFO("LabelComponents ok");
 }
 
 Object DetectionModule::getObject(const pcl::PointCloud<PointType>& cloud)
@@ -671,10 +783,14 @@ void DetectionModule::computeAllObjects()
     obj.indices = label_indices_i_[label];
     obj.avg_residuum = avg_residuals_[label];
 
+    // std::cout << "Object vector: " << obj.state.transpose() << std::endl;
+
     detected_objects_.push_back(obj);
   }
 
   time_stats_["computeAllObjects"].tock();
+
+  ROS_INFO("ComputeAllObjects ok");
 }
 
 void DetectionModule::trackDetections()
@@ -688,6 +804,7 @@ void DetectionModule::trackDetections()
   tracker_.update(dt.toSec(), detected_objects_, header_);
 
   time_stats_["trackDetections"].tock();
+  ROS_INFO("TrackDetections ok");
 }
 
 void DetectionModule::visualize()
@@ -763,6 +880,8 @@ void DetectionModule::visualize()
     img_bridge.toImageMsg(img_msg);
     label_img_pub_.publish(img_msg);
   }
+
+  ROS_INFO("visualize ok");
 }
 
 void DetectionModule::setupEvaluation()

@@ -168,6 +168,7 @@ bool BoundingBoxFilter::getStaticBBoxes(jsk_recognition_msgs::BoundingBoxArray& 
 
 void BoundingBoxFilter::updateDynamicStatus()
 {
+  // std::cout << "hits_: " << hits_ << std::endl;
   switch (tracked_object_.status)
   {
     case DYNAMIC:
@@ -175,6 +176,7 @@ void BoundingBoxFilter::updateDynamicStatus()
       has_turned_dynamic_ = false;
       break;
     case UNDEFINED:
+      std::cout << "hits_: " << hits_ << " , maxundfined_hits : " << max_undefined_hits_ << std::endl;
       if (hits_ > max_undefined_hits_)
       {
         tracked_object_.status = STATIC;
@@ -185,6 +187,7 @@ void BoundingBoxFilter::updateDynamicStatus()
       // continue with STATIC check otherwise (direct transition to DYNAMIC possible)
     case STATIC:  // transition to DYNAMIC possible
       // Check avg residuum
+      std::cout << "avg_residuum: " << tracked_object_.avg_residuum << std::endl;
       float min_required_residuum = tracked_object_.state[6] * residuum_height_ratio_;
       if (tracked_object_.avg_residuum < min_required_residuum)
         return;
@@ -199,6 +202,9 @@ void BoundingBoxFilter::updateDynamicStatus()
       auto d_squared = (x - x0) * (x - x0) + (y - y0) * (y - y0);  // + (z - z0) * (z - z0);
 
       // avoid computing the actual square root
+
+      // ROS_INFO("d_squared: %f", d_squared);
+      std::cout << "d_squared: " << d_squared << std::endl;
       if (d_squared >= min_travel_dist_ * min_travel_dist_)
       {
         tracked_object_.status = DYNAMIC;

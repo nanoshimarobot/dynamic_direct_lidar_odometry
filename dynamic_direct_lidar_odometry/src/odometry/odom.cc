@@ -1380,5 +1380,5 @@ void OdomNode::debug()
     output << "Removed Points   :: " << std::setfill(' ') << std::setw(6) << non_static_cloud_->size() << std::endl;
   }
 
-  std::cout << output.str();
+  // std::cout << output.str();
 }
