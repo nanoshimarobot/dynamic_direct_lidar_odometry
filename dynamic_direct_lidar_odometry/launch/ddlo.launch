@@ -3,8 +3,10 @@
   <arg name="rviz" default="true"/>
 
   <arg name="play_bag" default="true"/>
-  <arg name="pointcloud_topic" default="/autonomy_module_lidar/points"/>
-  <arg name="imu_topic" default="/imu/xsens/data"/>
+  <!-- <arg name="pointcloud_topic" default="/autonomy_module_lidar/points"/>
+  <arg name="imu_topic" default="/imu/xsens/data"/> -->
+  <arg name="pointcloud_topic" default="/points2"/>
+  <arg name="imu_topic" default="/imu"/>
 
   <group ns="ddlo">
 
@@ -55,9 +57,9 @@
   <include file="$(find dynamic_direct_lidar_odometry)/launch/trajectories_server.launch"/>
 
   <!-- ROS bag file -->
-  <include file="$(find dynamic_direct_lidar_odometry)/launch/play_kantplatz_data.launch" if="$(arg play_bag)">
-    <arg name="directory" value="$(arg directory)"/>
-  </include>
+  <!-- <include file="$(find dynamic_direct_lidar_odometry)/launch/play_kantplatz_data.launch" if="$(arg play_bag)">
+    <arg name="directory" value="$(find dynamic_direct_lidar_odometry)/rosbag"/>
+  </include> -->
 
   </group>
 
