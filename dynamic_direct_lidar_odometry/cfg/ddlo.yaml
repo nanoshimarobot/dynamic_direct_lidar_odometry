@@ -1,3 +1,146 @@
+# gravityAlign: false
+# printStatus: true
+# dynamicDetection: true
+# odomFrame: "odom"
+# childFrame: "autonomy_module_lidar_frame"
+
+# mapNode:
+#   publishFullMap: false
+#   publishFreq: 1.0
+#   useVoxelFilter: true
+#   leafSize: 0.25
+#   filterBboxHistory: true  # remove all points within an object's bbox in the map
+#   filterMargin: 0          # extend the bbox by this value in all dimensions
+
+# odomNode:
+#   preprocessing:
+#     downsampling:
+#       use: true
+#       row: 2
+#       col: 5
+#     cropBoxFilter:
+#       use: true
+#       size: 0.1
+#     voxelFilter:
+#       scan:
+#         use: true
+#         res: 0.1
+#       submap:
+#         use: true
+#         res: 0.05
+
+#   keyframe:
+#     threshD: 1.0
+#     threshR: 0.1
+
+#   submap:
+#     keyframe:
+#       knn: 10
+#       kcv: 10
+#       kcc: 10
+
+#   gicp:
+#     minNumPoints: 10
+#     s2s:
+#       kCorrespondences: 10
+#       maxCorrespondenceDistance: 1.0
+#       maxIterations: 32
+#       transformationEpsilon: 0.01
+#       euclideanFitnessEpsilon: 0.01
+#       ransac:
+#         iterations: 5
+#         outlierRejectionThresh: 1.0
+#     s2m:
+#       kCorrespondences: 20
+#       maxCorrespondenceDistance: 2.0
+#       maxIterations: 32
+#       transformationEpsilon: 0.01
+#       euclideanFitnessEpsilon: 0.01
+#       ransac:
+#         iterations: 5
+#         outlierRejectionThresh: 1.0
+
+#   # detection:
+#   #   rows: 512
+#   #   columns: 512
+#   #   organized: True
+#   #   ang_bottom: 45
+#   #   groundRows: 200  # "a rough number of scan lines that will cover the ground"
+#   #   groundAngleThreshold: 45
+#   #   minimumRange: 0.3
+#   #   sensorMountAngle: 0.0
+#   #   theta: 0.2  # 60.0 / 180.0 * M_PI;
+#   #   minPointNum: 10
+#   #   validPointNum: 15
+#   #   minLineNum: 4
+#   #   validLineNum: 6
+#   #   minDeltaZ: 0.6
+#   #   maxDeltaZ: 3.0
+#   #   maxDistance: 5.0
+#   #   maxElevation: 3.0  # max height relative to robot height
+#   #   maxDimRatio: 10  # ratio biggest/smallest bbox dim
+#   #   residuumHeightRatio: 0.3
+#   #   dilateKernelSize: 5
+#   detection:
+#     # 1) 取得する深度画像の縦横にあわせる（例: 640×576）
+#     #    ただし、コードで強制的に 512×512 に変換している場合はそこに合わせる
+#     rows: 512                
+#     columns: 512            
+
+#     # Azure Kinect の点群は organized（画素と1:1対応）
+#     organized: true          
+
+#     # 2) センサーをやや下向き(30°くらい)に設置する場合の例
+#     #    実際のカメラチルト角・FoV 下限に応じて調整
+#     ang_bottom: 30           
+
+#     # 3) 地面として推定する走査線の行数
+#     #    センサー下部に地面がどれくらい映り込むかで調整
+#     groundRows: 180           
+#     groundAngleThreshold: 80  # 地面認定のための角度許容範囲(°)
+#     sensorMountAngle: 0.0     # 実機が水平なら 0.0, 下向きならその角度
+
+#     # 4) 範囲外・近距離無効化など
+#     minimumRange: 0.3         # 30cm 未満はノイズが多いので除外
+#     maxDistance: 8.0          # 8m より遠い点は無視 (WFOVモードなら 8~10mも可)
+    
+#     # 5) セグメンテーション設定
+#     #    （隣接画素との“段差”を別オブジェクトとみなす閾値）
+#     #    0.1745 rad ≈ 10 deg など。室内では少し小さめ(～0.15 rad)が多めに分割できておすすめ
+#     theta: 0.2  # ~8.6°
+
+#     # 6) クラスタとして認める最低ポイント数や行数
+#     minPointNum: 40
+#     validPointNum: 15
+#     minLineNum: 4
+#     validLineNum: 6
+
+#     # 7) クラスタ高さ判定
+#     minDeltaZ: 0.1            # 20cm 未満の高さ変化は除外
+#     maxDeltaZ: 2.5            # 2.5m を超えると“巨大すぎ”として除外 (環境次第)
+#     maxElevation: 2.0         # センサー高さから2m上まで許容
+
+#     # 8) 長辺/短辺 の比が大きすぎる（細すぎる or 平たすぎる）オブジェクトは除外
+#     maxDimRatio: 10.0         
+
+#     # 9) ICPの残差画像拡大表示やノイズ軽減用
+#     residuumHeightRatio: 0.3  # ICP 残差を高さとの相対比で用いる場合
+#     dilateKernelSize: 3       # 残差画像をダイレートして見やすくする
+
+
+#   tracking:
+#     maxNoHits: 10  # window after which objects without hits are removed
+#     minDynamicHits: 5  # minimum number of hits for object to be dynamic
+#     maxUndefinedHits: 1  # window after which non-dynamic objects are labeled as static
+#     maxObjVelocity: 15  # m/s
+#     minDistFromOrigin: 0.75  # if an objects trajectory is shorter than this, it is not classified as dynamic
+
+#   evaluation:
+#     evaluate: false
+#     pkgPath: "abc.yaml"
+#     dir: "/some/dir"
+
+
 gravityAlign: false
 printStatus: true
 dynamicDetection: true
@@ -5,7 +148,7 @@ odomFrame: "odom"
 childFrame: "autonomy_module_lidar_frame"
 
 mapNode:
-  publishFullMap: false
+  publishFullMap: true
   publishFreq: 1.0
   useVoxelFilter: true
   leafSize: 0.25
@@ -17,17 +160,17 @@ odomNode:
     downsampling:
       use: true
       row: 2
-      col: 5
+      col: 2
     cropBoxFilter:
       use: true
-      size: 0.1
+      size: 1.0
     voxelFilter:
       scan:
         use: true
         res: 0.1
       submap:
         use: true
-        res: 0.05
+        res: 0.1
 
   keyframe:
     threshD: 1.0
@@ -60,73 +203,27 @@ odomNode:
         iterations: 5
         outlierRejectionThresh: 1.0
 
-  # detection:
-  #   rows: 512
-  #   columns: 512
-  #   organized: True
-  #   ang_bottom: 45
-  #   groundRows: 200  # "a rough number of scan lines that will cover the ground"
-  #   groundAngleThreshold: 45
-  #   minimumRange: 0.3
-  #   sensorMountAngle: 0.0
-  #   theta: 0.2  # 60.0 / 180.0 * M_PI;
-  #   minPointNum: 10
-  #   validPointNum: 15
-  #   minLineNum: 4
-  #   validLineNum: 6
-  #   minDeltaZ: 0.6
-  #   maxDeltaZ: 3.0
-  #   maxDistance: 5.0
-  #   maxElevation: 3.0  # max height relative to robot height
-  #   maxDimRatio: 10  # ratio biggest/smallest bbox dim
-  #   residuumHeightRatio: 0.3
-  #   dilateKernelSize: 5
   detection:
-    # 1) 取得する深度画像の縦横にあわせる（例: 640×576）
-    #    ただし、コードで強制的に 512×512 に変換している場合はそこに合わせる
-    rows: 512                
-    columns: 512            
-
-    # Azure Kinect の点群は organized（画素と1:1対応）
-    organized: true          
-
-    # 2) センサーをやや下向き(30°くらい)に設置する場合の例
-    #    実際のカメラチルト角・FoV 下限に応じて調整
-    ang_bottom: 30           
-
-    # 3) 地面として推定する走査線の行数
-    #    センサー下部に地面がどれくらい映り込むかで調整
-    groundRows: 180           
-    groundAngleThreshold: 80  # 地面認定のための角度許容範囲(°)
-    sensorMountAngle: 0.0     # 実機が水平なら 0.0, 下向きならその角度
-
-    # 4) 範囲外・近距離無効化など
-    minimumRange: 0.3         # 30cm 未満はノイズが多いので除外
-    maxDistance: 8.0          # 8m より遠い点は無視 (WFOVモードなら 8~10mも可)
-    
-    # 5) セグメンテーション設定
-    #    （隣接画素との“段差”を別オブジェクトとみなす閾値）
-    #    0.1745 rad ≈ 10 deg など。室内では少し小さめ(～0.15 rad)が多めに分割できておすすめ
-    theta: 0.2  # ~8.6°
-
-    # 6) クラスタとして認める最低ポイント数や行数
-    minPointNum: 40
+    rows: 512
+    columns: 512
+    organized: True
+    ang_bottom: 45
+    groundRows: 200  # "a rough number of scan lines that will cover the ground"
+    groundAngleThreshold: 45
+    minimumRange: 0.3
+    sensorMountAngle: 0.0
+    theta: 0.25  # 60.0 / 180.0 * M_PI;
+    minPointNum: 20
     validPointNum: 15
     minLineNum: 4
     validLineNum: 6
-
-    # 7) クラスタ高さ判定
-    minDeltaZ: 0.1            # 20cm 未満の高さ変化は除外
-    maxDeltaZ: 2.5            # 2.5m を超えると“巨大すぎ”として除外 (環境次第)
-    maxElevation: 2.0         # センサー高さから2m上まで許容
-
-    # 8) 長辺/短辺 の比が大きすぎる（細すぎる or 平たすぎる）オブジェクトは除外
-    maxDimRatio: 10.0         
-
-    # 9) ICPの残差画像拡大表示やノイズ軽減用
-    residuumHeightRatio: 0.3  # ICP 残差を高さとの相対比で用いる場合
-    dilateKernelSize: 3       # 残差画像をダイレートして見やすくする
-
+    minDeltaZ: 0.1
+    maxDeltaZ: 1.8
+    maxDistance: 8.0
+    maxElevation: 3.0  # max height relative to robot height
+    maxDimRatio: 10  # ratio biggest/smallest bbox dim
+    residuumHeightRatio: 0.3
+    dilateKernelSize: 2
 
   tracking:
     maxNoHits: 10  # window after which objects without hits are removed
@@ -139,101 +236,4 @@ odomNode:
     evaluate: false
     pkgPath: "abc.yaml"
     dir: "/some/dir"
-
-
-# gravityAlign: false
-# printStatus: true
-# dynamicDetection: true
-# odomFrame: "odom"
-# childFrame: "autonomy_module_lidar_frame"
-
-# mapNode:
-#   publishFullMap: true
-#   publishFreq: 1.0
-#   useVoxelFilter: true
-#   leafSize: 0.25
-#   filterBboxHistory: true  # remove all points within an object's bbox in the map
-#   filterMargin: 0          # extend the bbox by this value in all dimensions
-
-# odomNode:
-#   preprocessing:
-#     downsampling:
-#       use: true
-#       row: 2
-#       col: 5
-#     cropBoxFilter:
-#       use: true
-#       size: 1.0
-#     voxelFilter:
-#       scan:
-#         use: true
-#         res: 0.25
-#       submap:
-#         use: true
-#         res: 0.5
-
-#   keyframe:
-#     threshD: 5.0
-#     threshR: 45.0
-
-#   submap:
-#     keyframe:
-#       knn: 10
-#       kcv: 10
-#       kcc: 10
-
-#   gicp:
-#     minNumPoints: 10
-#     s2s:
-#       kCorrespondences: 10
-#       maxCorrespondenceDistance: 1.0
-#       maxIterations: 32
-#       transformationEpsilon: 0.01
-#       euclideanFitnessEpsilon: 0.01
-#       ransac:
-#         iterations: 5
-#         outlierRejectionThresh: 1.0
-#     s2m:
-#       kCorrespondences: 20
-#       maxCorrespondenceDistance: 2.0
-#       maxIterations: 32
-#       transformationEpsilon: 0.01
-#       euclideanFitnessEpsilon: 0.01
-#       ransac:
-#         iterations: 5
-#         outlierRejectionThresh: 1.0
-
-#   detection:
-#     rows: 128
-#     columns: 1024
-#     organized: True
-#     ang_bottom: 45
-#     groundRows: 60  # "a rough number of scan lines that will cover the ground"
-#     groundAngleThreshold: 10
-#     minimumRange: 1.0
-#     sensorMountAngle: 0.0
-#     theta: 0.2  # 60.0 / 180.0 * M_PI;
-#     minPointNum: 40
-#     validPointNum: 15
-#     minLineNum: 4
-#     validLineNum: 6
-#     minDeltaZ: 0.6
-#     maxDeltaZ: 3.0
-#     maxDistance: 25
-#     maxElevation: 1.0  # max height relative to robot height
-#     maxDimRatio: 10  # ratio biggest/smallest bbox dim
-#     residuumHeightRatio: 0.3
-#     dilateKernelSize: 2
-
-#   tracking:
-#     maxNoHits: 10  # window after which objects without hits are removed
-#     minDynamicHits: 5  # minimum number of hits for object to be dynamic
-#     maxUndefinedHits: 10  # window after which non-dynamic objects are labeled as static
-#     maxObjVelocity: 15  # m/s
-#     minDistFromOrigin: 0.75  # if an objects trajectory is shorter than this, it is not classified as dynamic
-
-#   evaluation:
-#     evaluate: false
-#     pkgPath: "abc.yaml"
-#     dir: "/some/dir"
 
