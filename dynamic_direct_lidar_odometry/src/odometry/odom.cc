@@ -432,6 +432,7 @@ void OdomNode::publishSubmap()
 
 void OdomNode::preprocessPoints()
 {
+  ROS_INFO("[Before downsampleFilter] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
   if (downsample_filter_use_)
   {
     if (!registration_scan_->isOrganized())
@@ -440,20 +441,31 @@ void OdomNode::preprocessPoints()
       return;
     }
     downsample_filter_.setInputCloud(registration_scan_);
+    downsample_filter_.setKeepOrganized(true);
     downsample_filter_.filter(*registration_scan_);
   }
+  ROS_INFO("[After downsampleFilter] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
+
+  ROS_INFO("[Before cropboxFilter] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
   // Crop Box Filter
   if (crop_use_)
   {
     crop1_.setInputCloud(registration_scan_);
+    crop1_.setKeepOrganized(true);
     crop1_.filter(*registration_scan_);
   }
+  ROS_INFO("[After cropboxFilter] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
+  ROS_INFO("[Before voxelGridFilter] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
   // Voxel Grid Filter
   if (vf_scan_use_)
   {
     vf_scan_.setInputCloud(registration_scan_);
+    vf_scan_.setSaveLeafLayout(true);
     vf_scan_.filter(*registration_scan_);
+    downsample_filter_indices_vec_ = vf_scan_.getLeafLayout();
   }
+  ROS_INFO("downsample_filter_indices_vec_ size: %zu", downsample_filter_indices_vec_.size());
+  ROS_INFO("[After voxelGridFilter] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
 }
 
 void OdomNode::initializeInputTarget()
@@ -592,6 +604,7 @@ void OdomNode::initializeDDLO()
 
 void OdomNode::icpCB(const sensor_msgs::PointCloud2ConstPtr& pc)
 {
+  ROS_INFO("icpCB, input pc width: %d, height: %d", pc->width, pc->height);
   time_stats_["total"].tick();
   time_stats_["odometry"].tick();
 
@@ -604,6 +617,8 @@ void OdomNode::icpCB(const sensor_msgs::PointCloud2ConstPtr& pc)
   pcl::PointCloud<pcl::PointXYZI> tmp_xyzi;
   pcl::fromROSMsg(*pc, tmp_xyzi);
   pcl::copyPointCloud(tmp_xyzi, *registration_scan_);
+  ROS_INFO("[icpCB] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
+  // ROS_INFO("icpCB, registration_scan size: %d", registration_scan_->size());
   if (dynamic_detection_)
     pcl::copyPointCloud(tmp_xyzi, *segmentation_scan_);
 
@@ -648,9 +663,11 @@ void OdomNode::icpCB(const sensor_msgs::PointCloud2ConstPtr& pc)
 
   // Set new frame as input source for both gicp objects
   setInputSources();
+  ROS_INFO("[setInputSources] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
 
   // Get the next pose via S2S + S2M
   scanMatching();
+  ROS_INFO("[scanMatching] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
 
   // transform point clouds
   transformScans();
@@ -760,9 +777,53 @@ void OdomNode::scanMatching()
   gicp_s2m_.getResiduals(residuals, T_);
 
   // Set residals as intensity
-  pcl::copyPointCloud(*registration_scan_, *residuals_cloud_);
-  for (int i = 0; i < residuals_cloud_->size(); i++)
-    residuals_cloud_->points[i].intensity = residuals[i];
+  // ROS_INFO("registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
+  // ROS_INFO("registration_scan_ size : %d", registration_scan_->size());
+  // pcl::copyPointCloud(*registration_scan_, *residuals_cloud_);
+  // ROS_INFO("residuals_cloud_ : H:%d x W:%d", residuals_cloud_->width, residuals_cloud_->height);
+  // ROS_INFO("ResidualsCloud size : %d", residuals_cloud_->size());
+  
+  // ROS_INFO("ResidualsCloud width : %d , height : %d", residuals_cloud_->width, residuals_cloud_->height);
+  // ROS_INFO("Residuals size: %d", residuals.size());
+  double theta_min = -60 * M_PI / 180;
+  double theta_max = 60 * M_PI / 180;
+  residuals_cloud_->points.clear();
+  residuals_cloud_->points.resize(512 * 512);
+  residuals_cloud_->width = 512;
+  residuals_cloud_->height = 512;
+  // residuals_cloud_->is_dense = false;
+  ROS_INFO("residuals_cloud_ : H:%d x W:%d", residuals_cloud_->width, residuals_cloud_->height);
+  for(int i = 0; i < registration_scan_->size(); ++i){
+    const PointType& pt = registration_scan_->points[i];
+    double theta = atan2(pt.x, pt.z);
+    double phi = atan2(pt.y, sqrt(pt.x * pt.x + pt.z * pt.z));
+    int u = static_cast<int>((theta - theta_min) / (theta_max - theta_min) * 512);
+    int v = static_cast<int>((phi - theta_min) / (theta_max - theta_min) * 512);
+
+    int idx = v * 512 + u;
+    if (u < 0 || u >= 512 || v < 0 || v >= 512)
+      continue;
+
+    residuals_cloud_->points[idx].x = pt.x;
+    residuals_cloud_->points[idx].y = pt.y;
+    residuals_cloud_->points[idx].z = pt.z;
+    residuals_cloud_->points[idx].intensity = residuals[i];
+  }
+  ROS_INFO("done");
+  // for (int i = 0; i < residuals_cloud_->size(); i++)
+  //   residuals_cloud_->points[i].intensity = residuals[i];
+  // size_t num_valid_points = 0;
+  // for(int row = 0; row < 512; ++row){
+  //   for(int col = 0; col < 512; ++col){
+  //     int idx = row * 512 + col;
+  //     if(std::isnan(registration_scan_->points[idx].x) || std::isnan(registration_scan_->points[idx].y) || std::isnan(registration_scan_->points[idx].z))
+  //       continue;
+  //     ++num_valid_points;
+  //     // residuals_cloud_->points[idx].intensity = residuals[idx];
+  //     // std::cout << registration_scan_->points[idx].x << ", " << registration_scan_->points[idx].y << ", " << registration_scan_->points[idx].z << std::endl;
+  //   }
+  // }
+  // ROS_INFO("num_valid_points: %d", num_valid_points);
 
   // Update the S2S transform for next propagation
   T_s2s_prev_ = T_;

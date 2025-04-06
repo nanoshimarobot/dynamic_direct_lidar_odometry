@@ -204,34 +204,47 @@ void DetectionModule::projectResiduals(const pcl::PointCloud<PointType>::Ptr& cl
 {
   time_stats_["projectResiduals"].tick();
 
+  // ROS_INFO("Residual cloud size: %zu", cloud_in->points.size());
+  // ROS_INFO("Residual cloud H:%zu, W:%zu", H_, W_);
+
   residuals_mat_ = cv::Mat(H_, W_, CV_32F, cv::Scalar::all(0));
 
   int row, col, cloudSize;
   PointType thisPoint;
 
-  for (size_t i = 0; i < cloud_in->points.size(); ++i)
-  {
-    double x = cloud_in->points[i].x;
-    double y = cloud_in->points[i].y;
-    double z = cloud_in->points[i].z;
-    double intensity = cloud_in->points[i].intensity;  // the residuals are stored in the intensity channel
+  // for (size_t i = 0; i < cloud_in->points.size(); ++i)
+  // {
+  //   double x = cloud_in->points[i].x;
+  //   double y = cloud_in->points[i].y;
+  //   double z = cloud_in->points[i].z;
+  //   double intensity = cloud_in->points[i].intensity;  // the residuals are stored in the intensity channel
 
-    // Vertical angle and row
-    double v_angle = atan2(z, sqrt(x * x + y * y)) * 180 / M_PI;
-    row = H_ - (v_angle + ang_bottom_) / ang_res_y_;
-    if (row < 0 || row >= H_)
-      continue;
+  //   // Vertical angle and row
+  //   double v_angle = atan2(z, sqrt(x * x + y * y)) * 180 / M_PI;
+  //   row = H_ - (v_angle + ang_bottom_) / ang_res_y_;
+  //   if (row < 0 || row >= H_)
+  //     continue;
 
-    // Horizontal angle and column
-    double h_angle = atan2(x, y) * 180 / M_PI - start_orientation_;
-    col = round(h_angle / ang_res_x_);
+  //   // Horizontal angle and column
+  //   double h_angle = atan2(x, y) * 180 / M_PI - start_orientation_;
+  //   col = round(h_angle / ang_res_x_);
 
-    if (col >= W_)
-      col -= W_;
-    else if (col < 0)
-      col += W_;
+  //   if (col >= W_)
+  //     col -= W_;
+  //   else if (col < 0)
+  //     col += W_;
 
-    residuals_mat_.at<float>(row, col) = intensity;
+  //   residuals_mat_.at<float>(row, col) = intensity;
+  // }
+  for(row = 0; row < H_; ++row){
+    for(col = 0; col < W_; ++col){
+      size_t idx = row * W_ + col;
+      const auto& pt = cloud_in->points[idx];
+      if(!pcl::isFinite(pt)){
+        continue;
+      }
+      residuals_mat_.at<float>(row, col) = static_cast<double>(pt.intensity);
+    }
   }
 
   icp_residuals_set_ = true;
