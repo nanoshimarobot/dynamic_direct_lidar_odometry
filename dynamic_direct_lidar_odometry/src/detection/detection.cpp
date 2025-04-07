@@ -272,22 +272,22 @@ void DetectionModule::projectScan(const pcl::PointCloud<PointType>::Ptr& cloud_i
   bool is_organized = cloud_in_t_->isOrganized() && is_organized_;  // TODO check this
 
   // find start orientation for aligning range image with residual image
-  if (start_orientation_ == -9999)
-  {
-    for (size_t row = 0; row < H_; ++row)
-    {
-      size_t idx = row * W_;
-      if ((cloud_in_->points[idx].x != 0 && cloud_in_->points[idx].x < 1e9) &&
-          (cloud_in_->points[idx].y != 0 && cloud_in_->points[idx].x < 1e9))
-      {
-        start_orientation_ = atan2(cloud_in_->points[idx].x, cloud_in_->points[idx].y) * 180 / M_PI;
-        ROS_INFO("Start angle: %f", start_orientation_);
-        break;
-      }
-    }
-    if (start_orientation_ == -9999)
-      ROS_WARN("Could not find start angle in %d rings", H_);
-  }
+  // if (start_orientation_ == -9999)
+  // {
+  //   for (size_t row = 0; row < H_; ++row)
+  //   {
+  //     size_t idx = row * W_;
+  //     if ((cloud_in_->points[idx].x != 0 && cloud_in_->points[idx].x < 1e9) &&
+  //         (cloud_in_->points[idx].y != 0 && cloud_in_->points[idx].x < 1e9))
+  //     {
+  //       start_orientation_ = atan2(cloud_in_->points[idx].x, cloud_in_->points[idx].y) * 180 / M_PI;
+  //       ROS_INFO("Start angle: %f", start_orientation_);
+  //       break;
+  //     }
+  //   }
+  //   if (start_orientation_ == -9999)
+  //     ROS_WARN("Could not find start angle in %d rings", H_);
+  // }
 
   // range image projection
   float range;

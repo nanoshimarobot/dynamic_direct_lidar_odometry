@@ -207,26 +207,26 @@ odomNode:
     rows: 512
     columns: 512
     organized: True
-    ang_bottom: 45
+    ang_bottom: 90
     groundRows: 200  # "a rough number of scan lines that will cover the ground"
     groundAngleThreshold: 45
     minimumRange: 0.3
     sensorMountAngle: 0.0
     theta: 0.25  # 60.0 / 180.0 * M_PI;
     minPointNum: 20
-    validPointNum: 15
+    validPointNum: 20
     minLineNum: 4
     validLineNum: 6
-    minDeltaZ: 0.1
+    minDeltaZ: 0.5
     maxDeltaZ: 1.8
     maxDistance: 8.0
     maxElevation: 3.0  # max height relative to robot height
     maxDimRatio: 10  # ratio biggest/smallest bbox dim
     residuumHeightRatio: 0.3
-    dilateKernelSize: 2
+    dilateKernelSize: 3
 
   tracking:
-    maxNoHits: 10  # window after which objects without hits are removed
+    maxNoHits: 30  # window after which objects without hits are removed
     minDynamicHits: 5  # minimum number of hits for object to be dynamic
     maxUndefinedHits: 1  # window after which non-dynamic objects are labeled as static
     maxObjVelocity: 15  # m/s

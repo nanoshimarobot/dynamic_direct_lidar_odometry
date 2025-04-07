@@ -462,9 +462,9 @@ void OdomNode::preprocessPoints()
     vf_scan_.setInputCloud(registration_scan_);
     vf_scan_.setSaveLeafLayout(true);
     vf_scan_.filter(*registration_scan_);
-    downsample_filter_indices_vec_ = vf_scan_.getLeafLayout();
+    // downsample_filter_indices_vec_ = vf_scan_.getLeafLayout();
   }
-  ROS_INFO("downsample_filter_indices_vec_ size: %zu", downsample_filter_indices_vec_.size());
+  // ROS_INFO("downsample_filter_indices_vec_ size: %zu", downsample_filter_indices_vec_.size());
   ROS_INFO("[After voxelGridFilter] registration_scan_ : H:%d x W:%d", registration_scan_->width, registration_scan_->height);
 }
 
