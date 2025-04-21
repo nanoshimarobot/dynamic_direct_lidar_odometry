@@ -264,4 +264,6 @@ private:
 
   bool dynamic_detection_;
   bool print_status_;
+
+  std::string traj_save_name_;
 };

@@ -140,6 +140,15 @@ OdomNode::OdomNode()
   memset(CPUBrandString, 0, sizeof(CPUBrandString));
   cpu_type_ = "";
 
+  // save traj for evo
+  auto now = std::chrono::system_clock::now();
+  auto t = std::chrono::system_clock::to_time_t(now);
+  std::tm tm = *std::localtime(&t);
+  std::ostringstream oss;
+  oss << std::put_time(&tm, "%Y%m%d%H%M");
+
+  traj_save_name_ = "/root/catkin_ws/src/" + oss.str() + "_traj.txt";
+
 #ifdef HAS_CPUID
   unsigned int CPUInfo[4] = { 0, 0, 0, 0 };
   __cpuid(0x80000000, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
@@ -691,6 +700,13 @@ void OdomNode::icpCB(const sensor_msgs::PointCloud2ConstPtr& pc)
 
   // Update trajectory
   trajectory.push_back(std::make_pair(pose_, rotq_));
+
+  ofstream traj_file;
+  traj_file.open(traj_save_name_, std::ios::app);
+  ros::Time t = ros::Time::now();
+  double d_time = static_cast<double>(t.sec) + static_cast<double>(t.nsec) / 1e9;
+  traj_file<<fixed<<setprecision(7)<<d_time<<" "<<pose_.x()<<" "<<pose_.y()<<" "<<pose_.z()<<" "<<rotq_.x()<<" "<<rotq_.y()<<" "<<rotq_.z()<<" "<<rotq_.w()<<endl;
+  traj_file.close();
 
   // Update next time stamp
   prev_frame_stamp_ = curr_frame_stamp_;

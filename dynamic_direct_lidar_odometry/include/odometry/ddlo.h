@@ -36,6 +36,8 @@
 #include <string>
 #include <sys/times.h>
 #include <sys/vtimes.h>
+#include <chrono>
+#include <iostream>
 #include <thread>
 
 #ifdef HAS_CPUID
