@@ -511,10 +511,14 @@ void DetectionModule::cloudSegmentation()
 {
   time_stats_["cloudSegmentation"].tick();
 
+  const auto valid_range = [](const size_t i, const size_t j){
+    return i >= 156 && i <= 356 && j >= 156 && j <= 356;
+  };
+
   // segmentation process
   for (size_t i = 0; i < H_; ++i)
     for (size_t j = 0; j < W_; ++j)
-      if (label_mat_.at<int>(i, j) == 0)
+      if (label_mat_.at<int>(i, j) == 0 && valid_range(i, j))
         labelComponents(i, j);
 
   // Store label indices for later usage  TODO move this to labelComponents(?)
@@ -562,6 +566,10 @@ void DetectionModule::labelComponents(int row, int col)
   all_pushed_ind_Y_[0] = col;
   int all_pushed_ind_size = 1;
 
+  const auto valid_range = [](const size_t i, const size_t j){
+    return i >= 156 && i <= 356 && j >= 156 && j <= 356;
+  };
+
   while (queue_size > 0)
   {
     // Pop point
@@ -581,6 +589,9 @@ void DetectionModule::labelComponents(int row, int col)
 
       // skip above top scan line / below bottom scan line
       if (this_ind_Y < 0 || this_ind_Y >= H_)
+        continue;
+
+      if (!valid_range(this_ind_Y, this_ind_X))
         continue;
 
       // warp at image borders
