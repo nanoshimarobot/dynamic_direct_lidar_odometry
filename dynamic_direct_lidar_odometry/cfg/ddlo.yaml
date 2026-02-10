@@ -233,7 +233,7 @@ odomNode:
     minDistFromOrigin: 0.75  # if an objects trajectory is shorter than this, it is not classified as dynamic
 
   evaluation:
-    evaluate: false
+    evaluate: true
     pkgPath: "abc.yaml"
-    dir: "/some/dir"
+    dir: "/root/catkin_ws/src"
 

@@ -12,6 +12,7 @@
 
   <!-- Load parameters -->
   <rosparam file="$(find dynamic_direct_lidar_odometry)/cfg/ddlo.yaml" command="load"/>
+	<rosparam param="/use_sim_time">true</rosparam>
 
   <!-- DLO Odometry Node -->
   <node name="odom" pkg="dynamic_direct_lidar_odometry" type="ddlo_odom_node" output="screen" clear_params="true">
@@ -57,9 +58,9 @@
   <include file="$(find dynamic_direct_lidar_odometry)/launch/trajectories_server.launch"/>
 
   <!-- ROS bag file -->
-  <!-- <include file="$(find dynamic_direct_lidar_odometry)/launch/play_kantplatz_data.launch" if="$(arg play_bag)">
+  <include file="$(find dynamic_direct_lidar_odometry)/launch/play_kantplatz_data.launch" if="$(arg play_bag)">
     <arg name="directory" value="$(find dynamic_direct_lidar_odometry)/rosbag"/>
-  </include> -->
+  </include>
 
   </group>
 
